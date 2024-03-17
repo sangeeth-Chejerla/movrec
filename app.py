@@ -130,8 +130,13 @@ def build_chart(genre, percentile=0.85):
     return qualified
 
 
-# Content based recommendation system
-links_small = links_small[links_small["tmdbId"].notnull()]["tmdbId"].astype("int")
+try:
+    # Attempt to access and convert 'tmdbId' column
+    links_small = links_small[links_small["tmdbId"].notnull()]["tmdbId"].astype("int")
+except KeyError:
+    # Handle error if 'tmdbId' is missing
+    print("'tmdbId' column not found in DataFrame")
+    links_small = pd.Series([], dtype=int)
 
 ## Pre-processing step
 
@@ -144,15 +149,38 @@ def convert_int(x):
 
 
 # convert id into integer using convert_int function
-md["id"] = md["id"].apply(convert_int)
-# identify id is null.
-# md[md['id'].isnull()]
-md = md.drop([19730, 29503, 35587])
 
-smd = md[md["id"].isin(links_small)]
-smd.loc[:, "tagline"] = smd["tagline"].fillna("")
-smd.loc[:, "description"] = smd["overview"] + smd["tagline"]
-smd.loc[:, "description"] = smd["description"].fillna("")
+try:
+    # Apply conversion with error handling (assuming 'id' exists)
+    md["id"] = md["id"].apply(convert_int)
+
+    # Identify null 'id' using isnull()
+    null_id_rows = md[md["id"].isnull()]
+    print(f"Found null values in 'id' column: {null_id_rows.index.tolist()}")
+
+    # Drop rows with null 'id' if necessary (consider alternative approaches if needed)
+    md = md.dropna(subset=["id"])  # Drop rows with null in 'id' column
+
+except KeyError:
+    print("'id' column not found in DataFrame")
+
+# Rest of your code using md
+
+# Assuming links_small is a Series or DataFrame with 'tmdbId'
+try:
+    # Filter smd based on 'id' being in links_small (assuming 'id' exists)
+    smd = md[md["id"].isin(links_small)]
+
+    # Fill missing values in 'tagline' with empty string
+    smd.loc[:, "tagline"] = smd["tagline"].fillna("")
+
+    # Combine overview and tagline with null handling
+    smd["description"] = smd["overview"].fillna("") + smd["tagline"].fillna("")
+
+except KeyError:
+    print("One or both of 'overview' and 'tagline' columns not found in DataFrame")
+
+print(smd)  # Print the modified DataFrame
 
 
 tfidf_vectorizer = TfidfVectorizer(stop_words="english", min_df=1)
