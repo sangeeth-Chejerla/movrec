@@ -1,4 +1,6 @@
 from flask import Flask, render_template, request
+import random
+
 import pandas as pd
 import numpy as np
 from ast import literal_eval
@@ -310,7 +312,10 @@ id_map = id_map.merge(smd[["title", "id"]], on="id").set_index("title")
 indices_map = id_map.set_index("id")
 
 
-def hybrid(title, userId=123):
+def hybrid(title, userId=None):
+    if userId is None:
+        userId = random.randint(1, 600)  # Generates a random userId between 1 and 600
+
     try:
         idx = indices[title]
         tmdbId = id_map.loc[title]["id"]
