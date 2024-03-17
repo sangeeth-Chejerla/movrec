@@ -37,32 +37,24 @@ if "genres" in md.columns:
 else:
     md["genres"] = [[]] * len(md)
 
-# this is V  -> popularity
 vote_counts = md[md["vote_count"].notnull()]["vote_count"].astype("int")
-
-# this is R  -> average rating
 vote_averages = md[md["vote_average"].notnull()]["vote_average"].astype("int")
-
-# this is C -> mean of vote average.
 C = vote_averages.mean()
 m = vote_counts.quantile(0.95)
 
-md["year"] = pd.to_datetime(md["release_date"], errors="coerce").apply(
-    lambda x: str(x).split("-")[0] if x != np.nan else np.nan
-)
-
-# filters movies based on vote count, not null values.
+# Filter qualified movies based on vote count and average
 qualified = md[
     (md["vote_count"] >= m)
     & (md["vote_count"].notnull())
     & (md["vote_average"].notnull())
-][["title", "year", "vote_count", "vote_average", "popularity", "genres"]]
+]
+qualified = qualified[["title", "vote_count", "vote_average", "popularity", "genres"]]
 
 qualified["vote_count"] = qualified["vote_count"].astype("int")
 qualified["vote_average"] = qualified["vote_average"].astype("int")
 
 
-# calculate rating based on its own rating from different users.
+# Calculate weighted rating for qualified movies
 def weighted_rating(x):
     v = x["vote_count"]
     R = x["vote_average"]
@@ -72,7 +64,7 @@ def weighted_rating(x):
 qualified["wr"] = qualified.apply(weighted_rating, axis=1)
 qualified = qualified.sort_values("wr", ascending=False).head(250)
 
-# the genre is expanded into multiple columns.
+# Expand genre into multiple columns
 s = (
     md.apply(lambda x: pd.Series(x["genres"]), axis=1)
     .stack()
@@ -80,7 +72,6 @@ s = (
 )
 s.name = "genre"
 gen_md = md.drop("genres", axis=1).join(s)
-gen_md.head(3).transpose()
 
 
 # percentile -> compares individual data points to the overall distribution.
