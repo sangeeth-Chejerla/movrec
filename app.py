@@ -27,12 +27,15 @@ md = pd.read_csv("archive/movies_metadata.csv", low_memory=False)
 ratings = pd.read_csv("archive/ratings_small.csv")
 
 
-md["genres"] = (
-    md["genres"]
-    .fillna("[]")
-    .apply(literal_eval)
-    .apply(lambda x: [i["name"] for i in x] if isinstance(x, list) else [])
-)
+if "genres" in md.columns:
+    md["genres"] = (
+        md["genres"]
+        .fillna("[]")
+        .apply(literal_eval)
+        .apply(lambda x: [i["name"] for i in x] if isinstance(x, list) else [])
+    )
+else:
+    md["genres"] = [[]] * len(md)
 
 # this is V  -> popularity
 vote_counts = md[md["vote_count"].notnull()]["vote_count"].astype("int")
