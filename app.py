@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request
-
 import pandas as pd
 import numpy as np
 from ast import literal_eval
@@ -11,6 +10,11 @@ from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.corpus import wordnet
 from surprise import Reader, Dataset, SVD
 from surprise.model_selection import cross_validate
+import warnings
+from pandas.errors import SettingWithCopyWarning
+import pandas as pd
+
+warnings.filterwarnings("ignore", category=SettingWithCopyWarning)
 
 app = Flask(__name__)
 
