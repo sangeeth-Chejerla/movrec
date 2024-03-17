@@ -37,21 +37,45 @@ if "genres" in md.columns:
 else:
     md["genres"] = [[]] * len(md)
 
-vote_counts = md[md["vote_count"].notnull()]["vote_count"].astype("int")
-vote_averages = md[md["vote_average"].notnull()]["vote_average"].astype("int")
+try:
+    # Attempt to access 'vote_count' and 'vote_average' columns
+    vote_counts = md[md["vote_count"].notnull()]["vote_count"].astype("int")
+    vote_averages = md[md["vote_average"].notnull()]["vote_average"].astype("int")
+except KeyError:
+    # If either column is missing, handle the error gracefully
+    print(
+        "One or both of 'vote_count' and 'vote_average' columns not found in DataFrame"
+    )
+    vote_counts = pd.Series([], dtype=int)  # Empty Series of type int
+    vote_averages = pd.Series([], dtype=int)
 C = vote_averages.mean()
 m = vote_counts.quantile(0.95)
 
-# Filter qualified movies based on vote count and average
-qualified = md[
-    (md["vote_count"] >= m)
-    & (md["vote_count"].notnull())
-    & (md["vote_average"].notnull())
-]
-qualified = qualified[["title", "vote_count", "vote_average", "popularity", "genres"]]
+try:
+    # Filter qualified movies based on vote count and average
+    qualified = md[
+        (
+            md["vote_count"] >= m
+        )  # Assuming 'm' is defined elsewhere for minimum vote count
+        & (md["vote_count"].notnull())
+        & (md["vote_average"].notnull())
+    ]
+    qualified = qualified[
+        ["title", "vote_count", "vote_average", "popularity", "genres"]
+    ]
 
-qualified["vote_count"] = qualified["vote_count"].astype("int")
-qualified["vote_average"] = qualified["vote_average"].astype("int")
+    # Attempt data type conversion
+    qualified["vote_count"] = qualified["vote_count"].astype("int")
+    qualified["vote_average"] = qualified["vote_average"].astype("int")
+
+except KeyError:
+    # Handle error if 'vote_count' or 'vote_average' is missing
+    print(
+        "One or both of 'vote_count' and 'vote_average' columns not found in DataFrame"
+    )
+    qualified = pd.DataFrame(
+        [], columns=["title", "vote_count", "vote_average", "popularity", "genres"]
+    )
 
 
 # Calculate weighted rating for qualified movies
