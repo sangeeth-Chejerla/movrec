@@ -1,31 +1,35 @@
 from flask import Flask, render_template, request
 import random
-
+import requests
 import pandas as pd
 import numpy as np
 from ast import literal_eval
+
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
-from sklearn.kernel_approximation import svd
 from sklearn.metrics.pairwise import linear_kernel, cosine_similarity
 from nltk.stem.snowball import SnowballStemmer
-from nltk.stem.wordnet import WordNetLemmatizer
-from nltk.corpus import wordnet
-from surprise import Reader, Dataset, SVD
-from surprise.model_selection import cross_validate
+from surprise import SVD, Reader, Dataset
+from surprise.model_selection import train_test_split, cross_validate
 import warnings
 from pandas.errors import SettingWithCopyWarning
-import pandas as pd
+from sklearn.metrics import accuracy_score
 
 warnings.filterwarnings("ignore", category=SettingWithCopyWarning)
 
 app = Flask(__name__)
 
 
-credits = pd.read_csv("archive/credits.csv", low_memory=True)
-keywords = pd.read_csv("archive/keywords.csv", low_memory=True)
-links_small = pd.read_csv("archive/links_small.csv", low_memory=True)
-md = pd.read_csv("archive/movies_metadata.csv", low_memory=False)
-ratings = pd.read_csv("archive/ratings_small.csv", low_memory=True)
+# Read CSV files
+def read_csv_chunks(filename, chunk_size=50):
+    chunks = pd.read_csv(filename, low_memory=True, chunksize=chunk_size)
+    return pd.concat(chunks)
+
+
+credits = read_csv_chunks("archive/credits.csv")
+keywords = read_csv_chunks("archive/keywords.csv")
+links_small = read_csv_chunks("archive/links_small.csv")
+md = read_csv_chunks("archive/movies_metadata.csv")
+ratings = read_csv_chunks("archive/ratings_small.csv")
 
 if "genres" in md.columns:
     md["genres"] = (
